@@ -364,12 +364,12 @@ SELECT
     *
 FROM sub
 WHERE group_quartiles = '75%-100%'
-ORDER BY 2 DESC
+ORDER BY 3 DESC
 
 -- E) How many countries had a percent forestation higher than the United States in 2016?
 
 SELECT
-    COUNT(*)
+    COUNT(*) AS num_countries
 FROM forestation
 WHERE
     year = 2016 AND
