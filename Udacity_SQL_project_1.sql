@@ -1,4 +1,4 @@
--- PART 0
+-- PART 0 - Create a View called “forestation” by joining all three tables
 
 CREATE VIEW forestation AS
 SELECT
@@ -28,8 +28,6 @@ SELECT
 FROM forestation
 WHERE country = 'World' AND year = 1990
 
--- OK
-
 -- B) What was the total forest area (in sq km) of the world in 2016?
 -- Please keep in mind that you can use the country record denoted as “World" in the region table.
 
@@ -39,8 +37,6 @@ SELECT
     forest_area_sqkm
 FROM forestation
 WHERE country = 'World' AND year = 2016
-
--- OK
 
 -- C) What was the change (in sq km) in the forest area of the world from 1990 to 2016?
 
@@ -52,8 +48,6 @@ SELECT
     forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS deforestation
 FROM forestation
 WHERE country = 'World' AND (year = 2016 OR year = 1990)
-
--- OK
 
 -- D) What was the percent change in forest area of the world between 1990 and 2016?
 
@@ -89,10 +83,7 @@ WHERE year = 2016
 ORDER BY diff
 LIMIT 1
 
--- OK
-
 -- PART 2
-
 -- Prep: Create a table that shows the Regions and their percent forest area (sum of forest area divided by sum of land area) in 1990 and 2016.
 -- (Note that 1 sq mi = 2.59 sq km).
 
@@ -113,7 +104,8 @@ ORDER BY 1,2 DESC
 
 -- A) What was the percent forest of the entire world in 2016? Which region had the HIGHEST percent forest in 2016, and which had the LOWEST, to 2 decimal places?
 
--- What was the percent forest of the entire world in 2016? (2 decimal places)
+-- A.1) What was the percent forest of the entire world in 2016? (2 decimal places)
+
 SELECT
     region,
     year,
@@ -122,7 +114,8 @@ FROM region_forestation
 WHERE region = 'World' AND year = 2016
 
 
--- Which region had the HIGHEST percent forest in 2016? (2 decimal places)
+-- A.2) Which region had the HIGHEST percent forest in 2016? (2 decimal places)
+
 SELECT
     region,
     year,
@@ -133,7 +126,8 @@ ORDER BY 3 DESC
 LIMIT 1
 
 
--- Which region had the LOWEST percent forest in 2016? (2 decimal places)
+-- A.3) Which region had the LOWEST percent forest in 2016? (2 decimal places)
+
 SELECT
     region,
     year,
@@ -143,10 +137,10 @@ WHERE region <> 'World' AND year = 2016
 ORDER BY 3
 LIMIT 1
 
-
 -- B) What was the percent forest of the entire world in 1990? Which region had the HIGHEST percent forest in 1990, and which had the LOWEST, to 2 decimal places?
 
--- What was the percent forest of the entire world in 1990? (2 decimal places)
+-- B.1) What was the percent forest of the entire world in 1990? (2 decimal places)
+
 SELECT
     region,
     year,
@@ -155,7 +149,8 @@ FROM region_forestation
 WHERE region = 'World' AND year = 1990
 
 
--- Which region had the HIGHEST percent forest in 1990? (2 decimal places)
+-- B.2) Which region had the HIGHEST percent forest in 1990? (2 decimal places)
+
 SELECT
     region,
     year,
@@ -166,7 +161,8 @@ ORDER BY 3 DESC
 LIMIT 1
 
 
--- Which region had the LOWEST percent forest in 1990? (2 decimal places)
+-- B.3) Which region had the LOWEST percent forest in 1990? (2 decimal places)
+
 SELECT
     region,
     year,
@@ -201,7 +197,7 @@ ORDER BY 4
 
 -- PART 3
 
--- A) Which 5 countries saw the largest amount decrease in forest area from 1990 to 2016? What was the difference in forest area for each?
+-- A) Which 5 countries saw the largest amount DECREASE in forest area from 1990 to 2016? What was the difference in forest area for each?
 
 WITH sub AS (
     SELECT
@@ -229,7 +225,7 @@ WHERE
 ORDER BY 3 DESC
 LIMIT 5
 
--- A.2) Which 5 countries saw the largest amount increase in forest area from 1990 to 2016? What was the difference in forest area for each?
+-- A.2) Which 5 countries saw the largest amount INCREASE in forest area from 1990 to 2016? What was the difference in forest area for each?
 
 WITH sub AS (
     SELECT
@@ -257,7 +253,7 @@ WHERE
 ORDER BY 3 DESC
 LIMIT 5
 
--- B) Which 5 countries saw the largest percent decrease in forest area from 1990 to 2016? What was the percent change to 2 decimal places for each?
+-- B) Which 5 countries saw the largest percent DECREASE in forest area from 1990 to 2016? What was the percent change to 2 decimal places for each?
 
 WITH sub AS (
     SELECT
@@ -285,7 +281,7 @@ WHERE
 ORDER BY 3 DESC
 LIMIT 5
 
--- B) Which 5 countries saw the largest percent increase in forest area from 1990 to 2016? What was the percent change to 2 decimal places for each?
+-- B.2) Which 5 countries saw the largest percent INCREASE in forest area from 1990 to 2016? What was the percent change to 2 decimal places for each?
 
 WITH sub AS (
     SELECT
@@ -382,3 +378,5 @@ WHERE
             country = 'United States' AND
             year = 2016
         )
+
+-- PART 4 - RECOMMENDATIONS
