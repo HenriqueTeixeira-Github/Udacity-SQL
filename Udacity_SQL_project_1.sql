@@ -22,7 +22,7 @@ ON fa.country_code = r.country_code
 -- Please keep in mind that you can use the country record denoted as “World" in the region table.
 
 SELECT
-	region,
+    region,
     year,
     forest_area_sqkm
 FROM forestation
@@ -32,7 +32,7 @@ WHERE country = 'World' AND year = 1990
 -- Please keep in mind that you can use the country record denoted as “World" in the region table.
 
 SELECT
-	region,
+    region,
     year,
     forest_area_sqkm
 FROM forestation
@@ -40,25 +40,43 @@ WHERE country = 'World' AND year = 2016
 
 -- C) What was the change (in sq km) in the forest area of the world from 1990 to 2016?
 
+WITH sub AS (
+    SELECT
+        country,
+        year,
+        forest_area_sqkm,
+        LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS forest_area_sqkm_lead,
+        LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) - forest_area_sqkm AS diff_forest_2016_1990
+    FROM forestation
+    WHERE country = 'World' AND (year = 2016 OR year = 1990)
+    )
 SELECT
     country,
-    year,
-    forest_area_sqkm,
-    LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS forest_area_sqkm_lead,
-    forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS deforestation
-FROM forestation
-WHERE country = 'World' AND (year = 2016 OR year = 1990)
+    forest_area_sqkm AS forest_area_sqkm_1990,
+    forest_area_sqkm_lead AS forest_area_sqkm_2016,
+    diff_forest_2016_1990
+FROM sub
+LIMIT 1
 
 -- D) What was the percent change in forest area of the world between 1990 and 2016?
 
+WITH sub AS (
+    SELECT
+        country,
+        year,
+        forest_area_sqkm,
+        LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS forest_area_sqkm_lead,
+        LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) - forest_area_sqkm AS diff_forest_2016_1990
+    FROM forestation
+    WHERE country = 'World' AND (year = 2016 OR year = 1990)
+    )
 SELECT
     country,
-    year,
-    percent_forest,
-    LEAD(percent_forest) OVER (ORDER BY percent_forest DESC) AS percent_forest_lead,
-    percent_forest - LEAD(percent_forest) OVER (ORDER BY percent_forest DESC) AS deforestation_percent
-FROM forestation
-WHERE country = 'World' AND (year = 2016 OR year = 1990)
+    forest_area_sqkm AS forest_area_sqkm_1990,
+    forest_area_sqkm_lead AS forest_area_sqkm_2016,
+    (forest_area_sqkm_lead - forest_area_sqkm)/forest_area_sqkm AS percent_change_forest
+FROM sub
+LIMIT 1
 
 -- E) If you compare the amount of forest area lost between 1990 and 2016, to which country's total area in 2016 is it closest to?
 
@@ -72,7 +90,6 @@ WITH sub AS
     FROM forestation
     WHERE country = 'World' AND (year = 2016 OR year = 1990)
     )
-
 SELECT
     country,
     year,
