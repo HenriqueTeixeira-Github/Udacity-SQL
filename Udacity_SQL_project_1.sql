@@ -233,7 +233,7 @@ WITH sub AS (
 SELECT
     country,
     region,
-    ABS(diff_forest_area_2016_1990) AS Foreste_Area_Amount_Decrease
+    ABS(diff_forest_area_2016_1990)::decimal(10,2) AS Foreste_Area_Amount_Decrease
 FROM sub
 WHERE
     year = 2016 AND
@@ -261,7 +261,7 @@ WITH sub AS (
 SELECT
     country,
     region,
-    ABS(diff_forest_area_2016_1990) AS Foreste_Area_Amount_Decrease
+    ABS(diff_forest_area_2016_1990)::decimal(10,2) AS Foreste_Area_Amount_Decrease
 FROM sub
 WHERE
     year = 2016 AND
@@ -289,7 +289,7 @@ WITH sub AS (
 SELECT
     country,
     region,
-    ABS(diff_forest_area_2016_1990)/forest_area_sqkm_lead AS Foreste_Area_Amount_Decrease
+    (ABS(diff_forest_area_2016_1990)/forest_area_sqkm_lead)::decimal(2,2) AS foreste_area_amount_decrease
 FROM sub
 WHERE
     year = 2016 AND
@@ -317,7 +317,7 @@ WITH sub AS (
 SELECT
     country,
     region,
-    ABS(diff_forest_area_2016_1990)/forest_area_sqkm_lead AS Foreste_Area_Amount_Decrease
+    (ABS(diff_forest_area_2016_1990)/forest_area_sqkm_lead)::decimal(5,2) AS foreste_area_amount_increase
 FROM sub
 WHERE
     year = 2016 AND
@@ -359,7 +359,7 @@ WITH sub AS (
     SELECT
         country,
         region,
-        percent_forest,
+        percent_forest::decimal(2,2),
         CASE
             WHEN percent_forest >= 0 AND percent_forest <= 0.25 THEN '0%-25%'
             WHEN percent_forest > 0.25 AND percent_forest <= 0.50 THEN '25%-50%'
