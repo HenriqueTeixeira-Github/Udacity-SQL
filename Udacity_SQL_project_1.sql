@@ -398,7 +398,7 @@ WHERE
 
 -- PART 4 - RECOMMENDATIONS
 
-
+-- A) If countries were grouped by percent forestation in quartiles, how many countries it would have in each group per income_group?
 
 WITH sub AS (
     SELECT
@@ -432,7 +432,7 @@ FROM sub
 GROUP BY 1,2
 ORDER BY 1,2
 
--------
+-- B) If countries were grouped by percent change, how many countries it would have in each group per income_group
 
 
 WITH sub AS (
@@ -467,7 +467,7 @@ FROM sub
 WHERE year = 2016 AND diff_forest_2016_1990 IS NOT NULL
 GROUP BY 1,2
 
----------------------------------
+-- What is the average of forest change for the countries that increased for each income group?
 
 WITH sub AS (
     SELECT
@@ -494,7 +494,7 @@ WHERE
 GROUP BY 1
 ORDER BY 2 DESC
 
---------------------------------------------------------------------
+-- What is the average of forest change for the countries that decreased for each income group?
 
 WITH sub AS (
     SELECT
