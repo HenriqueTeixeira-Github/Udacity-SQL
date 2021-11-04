@@ -65,8 +65,8 @@ WITH sub AS (
         country,
         year,
         forest_area_sqkm,
-        LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS forest_area_sqkm_lead,
-        LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) - forest_area_sqkm AS diff_forest_2016_1990
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) - forest_area_sqkm AS diff_forest_2016_1990
     FROM forestation
     WHERE country = 'World' AND (year = 2016 OR year = 1990)
     )
@@ -85,8 +85,8 @@ WITH sub AS
         country,
         year,
         forest_area_sqkm,
-        LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS forest_area_sqkm_lead,
-        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY forest_area_sqkm DESC) AS deforestation
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS deforestation
     FROM forestation
     WHERE country = 'World' AND (year = 2016 OR year = 1990)
     )
@@ -94,7 +94,7 @@ SELECT
     country,
     year,
     total_area_sqkm AS total_area_sqkm,
-    ABS(total_area_sqkm - (SELECT MAX(deforestation) FROM sub)) as diff
+    ABS(total_area_sqkm - ABS((SELECT MAX(deforestation) FROM sub))) as diff
 FROM forestation
 WHERE year = 2016
 ORDER BY diff
@@ -397,3 +397,126 @@ WHERE
         )
 
 -- PART 4 - RECOMMENDATIONS
+
+
+
+WITH sub AS (
+    SELECT
+        country,
+        region,
+        income_group,
+        percent_forest::decimal(2,2),
+        CASE
+            WHEN percent_forest >= 0 AND percent_forest <= 0.25 THEN '0%-25%'
+            WHEN percent_forest > 0.25 AND percent_forest <= 0.50 THEN '25%-50%'
+            WHEN percent_forest > 0.50 AND percent_forest <= 0.75 THEN '50%-75%'
+            WHEN percent_forest > 0.75 AND percent_forest <= 1 THEN '75%-100%'
+        END AS group_quartiles
+    FROM forestation
+    WHERE
+        country <> 'World' AND
+        year = 2016 AND
+        percent_forest IS NOT NULL
+)
+
+SELECT
+    CASE
+        WHEN income_group = 'High income' THEN '1. High income'
+        WHEN income_group = 'Upper middle income' THEN '2. Upper middle income'
+        WHEN income_group = 'Lower middle income' THEN '3. Lower middle income'
+        WHEN income_group = 'Low income' THEN '4. Low income'
+    END AS income_group_sort,
+    group_quartiles,
+    COUNT(*) AS num_countries
+FROM sub
+GROUP BY 1,2
+ORDER BY 1,2
+
+-------
+
+
+WITH sub AS (
+    SELECT
+        country,
+        year,
+        income_group,
+        forest_area_sqkm,
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
+        (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
+    FROM forestation
+    WHERE
+        country <> 'World' AND (year = 2016 OR year = 1990)
+    ORDER BY 1
+    )
+
+SELECT
+    CASE
+        WHEN income_group = 'High income' THEN '1. High income'
+        WHEN income_group = 'Upper middle income' THEN '2. Upper middle income'
+        WHEN income_group = 'Lower middle income' THEN '3. Lower middle income'
+        WHEN income_group = 'Low income' THEN '4. Low income'
+    END AS income_group_sort,
+    CASE
+        WHEN percent_change > 0 THEN '1. INCREASED'
+        WHEN percent_change = 0 THEN '2. SAME'
+        WHEN percent_change < 0 THEN '3. DECREASED'
+    END AS percent_change_status,
+    COUNT(*)
+FROM sub
+WHERE year = 2016 AND diff_forest_2016_1990 IS NOT NULL
+GROUP BY 1,2
+
+---------------------------------
+
+WITH sub AS (
+    SELECT
+        country,
+        year,
+        income_group,
+        forest_area_sqkm,
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
+        (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
+    FROM forestation
+    WHERE
+        country <> 'World' AND (year = 2016 OR year = 1990)
+    ORDER BY 1
+    )
+
+SELECT
+    income_group,
+    AVG(diff_forest_2016_1990)::decimal(9,2) AS forest_change_increase
+FROM sub
+WHERE
+    year = 2016 AND
+    percent_change > 0 -- INCREASED
+GROUP BY 1
+ORDER BY 2 DESC
+
+--------------------------------------------------------------------
+
+WITH sub AS (
+    SELECT
+        country,
+        year,
+        income_group,
+        forest_area_sqkm,
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
+        (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
+    FROM forestation
+    WHERE
+        country <> 'World' AND (year = 2016 OR year = 1990)
+    ORDER BY 1
+    )
+
+SELECT
+    income_group,
+    ABS(AVG(diff_forest_2016_1990))::decimal(9,2) AS forest_change_decrease
+FROM sub
+WHERE
+    year = 2016 AND
+    percent_change < 0 -- DECREASED
+GROUP BY 1
+ORDER BY 2 DESC
