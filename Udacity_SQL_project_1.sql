@@ -104,20 +104,37 @@ LIMIT 1
 -- Prep: Create a table that shows the Regions and their percent forest area (sum of forest area divided by sum of land area) in 1990 and 2016.
 -- (Note that 1 sq mi = 2.59 sq km).
 
+-- Cleanning process to sum only the countries that have data for forest_area_sqkm and total_area_sqkm in 1990 and 2016.
+
+
+
 CREATE VIEW region_forestation AS
-SELECT
-    r.region as region,
-    fa.year as year,
-    SUM(fa.forest_area_sqkm) as forest_area_sqkm,
-    SUM(la.total_area_sq_mi)*2.59 as total_area_sqkm,
-    SUM(fa.forest_area_sqkm)/(SUM(la.total_area_sq_mi)*2.59) AS percent_forest
-FROM forest_area AS fa
-JOIN land_area AS la
-ON fa.country_code = la.country_code AND fa.year = la.year
-JOIN regions AS r
-ON fa.country_code = r.country_code
-GROUP BY 1,2
-ORDER BY 1,2 DESC
+    WITH forestation_clean AS (
+        SELECT
+            *
+        FROM forestation
+        WHERE
+            year IN (1990, 2016) AND
+            country NOT IN (
+            SELECT DISTINCT
+                country
+                FROM forestation
+            WHERE
+                year IN (1990, 2016) AND
+                (forest_area_sqkm IS NULL OR total_area_sqkm IS NULL)
+            )
+    )
+    SELECT
+        region,
+        year,
+        SUM(forest_area_sqkm) as forest_area_sqkm,
+        SUM(total_area_sqkm) as total_area_sqkm,
+        SUM(forest_area_sqkm)/SUM(total_area_sqkm) AS percent_forest
+    FROM forestation_clean
+    GROUP BY 1,2
+    ORDER BY 1,2 DESC
+
+
 
 -- A) What was the percent forest of the entire world in 2016? Which region had the HIGHEST percent forest in 2016, and which had the LOWEST, to 2 decimal places?
 
