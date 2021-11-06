@@ -1,4 +1,4 @@
--- PART 1
+-- PART 1 - Investigate the existing schema
 
 -- id from post and post_id from comments should have the same type
 -- upvotes and downvotes should be in a separeted table
@@ -6,7 +6,7 @@
 -- We should have a table for topics
 --  We hould have a table for users
 
--- PART 2
+-- PART 2 - Create the DDL for your new schema
 
 -- A. Allow new users to register:
 --      1. Each username has to be unique
@@ -77,3 +77,21 @@ CREATE TABLE vote (
     user_id INTEGER,
     post_id INTEGER
 )
+
+-- Checklist
+--      1.	List all users who haven’t logged in in the last year.
+--      2.	List all users who haven’t created any post.
+--      3.	Find a user by their username.
+--      4.	List all topics that don’t have any posts.
+--      5.	Find a topic by its name.
+--      6.	List the latest 20 posts for a given topic.
+--      7.	List the latest 20 posts made by a given user.
+--      8.	Find all posts that link to a specific URL, for moderation purposes.
+--      9.	List all the top-level comments (those that don’t have a parent comment) for a given post.
+--      10.	List all the direct children of a parent comment.
+--      11.	List the latest 20 comments made by a given user.
+--      12.	Compute the score of a post, defined as the difference between the number of upvotes and the number of downvotes
+
+--      13. You’ll need to use normalization, various constraints, as well as indexes in your new database schema. You should use named constraints and indexes to make your schema cleaner
+
+--      14. Your new database schema will be composed of five (5) tables that should have an auto-incrementing id as their primary key.
