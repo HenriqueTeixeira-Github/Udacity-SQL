@@ -1,4 +1,4 @@
--- PART 1 - Investigate the existing schema
+-- PART 1 - INVESTIGATE THE EXISTING SCHEMA
 
 -- id from post and post_id from comments should have the same type
 -- upvotes and downvotes should be in a separeted table
@@ -6,7 +6,7 @@
 -- We should have a table for topics
 --  We hould have a table for users
 
--- PART 2 - Create the DDL for your new schema
+-- PART 2 - CREATE THE DDL FOR YOUR NEW SCHEMA
 
 -- A. Allow new users to register:
 --      1. Each username has to be unique
@@ -78,7 +78,8 @@ CREATE TABLE vote (
     post_id INTEGER
 )
 
--- Checklist
+-- GUIDELINE
+
 --      1.	List all users who haven’t logged in in the last year.
 --      2.	List all users who haven’t created any post.
 --      3.	Find a user by their username.
@@ -95,3 +96,13 @@ CREATE TABLE vote (
 --      13. You’ll need to use normalization, various constraints, as well as indexes in your new database schema. You should use named constraints and indexes to make your schema cleaner
 
 --      14. Your new database schema will be composed of five (5) tables that should have an auto-incrementing id as their primary key.
+
+-- PART 3: MIGRATE THE PROVIDED DATA
+
+--      1.	Topic descriptions can all be empty
+--      2.	Since the bad_comments table doesn’t have the threading feature, you can migrate all comments as top-level comments, i.e. without a parent
+--      3.	You can use the Postgres string function regexp_split_to_table to unwind the comma-separated votes values into separate rows
+--      4.	Don’t forget that some users only vote or comment, and haven’t created any posts. You’ll have to create those users too.
+--      5.	The order of your migrations matter! For example, since posts depend on users and topics, you’ll have to migrate the latter first.
+--      6.	Tip: You can start by running only SELECTs to fine-tune your queries, and use a LIMIT to avoid large data sets. Once you know you have the correct query, you can then run your full INSERT...SELECT query.
+--      7.	Note: The data in your SQL Workspace contains thousands of posts and comments. The DML queries may take at least 10-15 seconds to run.
