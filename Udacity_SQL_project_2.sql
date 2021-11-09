@@ -76,9 +76,9 @@ CREATE TABLE "comments" (
 --      2. If the user who cast a vote gets deleted, then all their votes will remain, but will become dissociated from the user (OK)
 --      3. If a post gets deleted, then all the votes for that post should be automatically deleted too (OK)
 
-CREATE TABLE "vote" (
+CREATE TABLE "votes" (
     "id" SERIAL PRIMARY KEY,
-    "vote" TINYINT CHECK ("vote" = 1 OR "vote" = -1 ),
+    "vote" SMALLINT CHECK ("vote" = 1 OR "vote" = -1 ),
     "user_id" INTEGER,
     "post_id" INTEGER,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
@@ -163,7 +163,7 @@ INSERT INTO "posts" ("id","title","content","content_type","topic_id","user_id")
     ON INITCAP(bp.topic) = t.topic
     ORDER BY 1;
 
--- Forth Step: Create Comment's tables
+-- Forth Step: Create Comment's table
 
 INSERT INTO "comments" ("id","comment","post_id", "user_id")
     SELECT
@@ -174,3 +174,29 @@ INSERT INTO "comments" ("id","comment","post_id", "user_id")
     FROM bad_comments AS bc
     JOIN users AS u
     ON bc.username = u.username
+
+-- Fifth Step: Create vote's table
+
+INSERT INTO "votes" ("vote", "user_id", "post_id")
+    WITH sub AS (
+        SELECT
+            regexp_split_to_table(upvotes,',') AS username,
+            1 AS vote,
+            id AS post_id
+        FROM bad_posts
+        UNION ALL
+        SELECT
+            regexp_split_to_table(downvotes,',') AS username,
+            -1 AS vote,
+            id AS post_id
+        FROM bad_posts
+        ORDER BY 3,2,1
+    )
+
+    SELECT
+        s.vote AS vote,
+        u.id AS user_id,
+        s.post_id AS post_id
+    FROM sub AS s
+    JOIN users AS u
+    ON s.username = u.username
