@@ -63,13 +63,13 @@ CREATE TABLE "posts" (
 CREATE TABLE "comments" (
     "id" SERIAL PRIMARY KEY,
     "comment" TEXT NOT NULL,
-    "comment_id" INTEGER,
+    "comment_id" INTEGER NULL,
     "post_id" INTEGER,
     "user_id" INTEGER,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
-    FOREIGN KEY ("comment_id") REFERENCES "comments" ON DELETE CASCADE
-)
+    FOREIGN KEY ("comment_id") REFERENCES comments(id) ON DELETE CASCADE
+);
 
 -- E. Allow registered users to create new posts on existing topics:
 --      1. Hint: you can store the (up/down) value of the vote as the values 1 and -1 respectively. (OK)
@@ -165,10 +165,12 @@ INSERT INTO "posts" ("id","title","content","content_type","topic_id","user_id")
 
 -- Forth Step: Create Comment's tables
 
--- CREATE TABLE "comments" (
---     "id" SERIAL PRIMARY KEY,
---     "comment" TEXT NOT NULL,
---     "comment_id" INTEGER,
---     "post_id" INTEGER,
---     "user_id" INTEGER,
--- )
+INSERT INTO "comments" ("id","comment","post_id", "user_id")
+    SELECT
+    	bc.id AS id,
+    	bc.text_content AS comment,
+    	bc.post_id AS post_id,
+    	u.id AS user_id
+    FROM bad_comments AS bc
+    JOIN users AS u
+    ON bc.username = u.username
