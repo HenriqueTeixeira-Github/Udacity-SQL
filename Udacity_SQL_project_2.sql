@@ -15,12 +15,12 @@
 --      4. We won’t worry about user passwords for this project (OK)
 
 CREATE TABLE "users" (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(25) UNIQUE NOT NULL,
-    birth_date DATE NOT NULL,
-    gender VARCHAR(20),
-    last_login TIMESTAMP,
-    created_at TIMESTAMP,
+    "id" SERIAL PRIMARY KEY,
+    "username" VARCHAR(25) UNIQUE NOT NULL,
+    "birth_date" DATE,
+    "gender" VARCHAR(20),
+    "last_login" TIMESTAMP,
+    "created_at" TIMESTAMP,
 )
 
 -- B. Allow registered users to create new topics:
@@ -30,9 +30,9 @@ CREATE TABLE "users" (
 --      4. Topics can have an optional description of at most 500 characters (OK)
 
 CREATE TABLE "topics" (
-    id SERIAL PRIMARY KEY,
-    topic VARCHAR(30) UNIQUE NOT NULL,
-    description VARCHAR(500)
+    "id" SERIAL PRIMARY KEY,
+    "topic" VARCHAR(30) UNIQUE NOT NULL,
+    "description" VARCHAR(500)
 )
 
 -- C. Allow registered users to create new posts on existing topics:
@@ -43,12 +43,12 @@ CREATE TABLE "topics" (
 --      5. If the user who created the post gets deleted, then the post will remain, but it will become dissociated from that user (OK)
 
 CREATE TABLE "posts" (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(100) NOT NULL,
-    content TEXT,
-    content_type VARCHAR(10), -- TEXT OR URL
-    topic_id INTEGER,
-    user_id INTEGER,
+    "id" SERIAL PRIMARY KEY,
+    "title" VARCHAR(100) NOT NULL,
+    "content" TEXT,
+    "content_type" VARCHAR(10), -- TEXT OR URL
+    "topic_id" INTEGER,
+    "user_id" INTEGER,
     FOREIGN KEY ("topic_id") REFERENCES "topics" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL
 )
@@ -61,11 +61,11 @@ CREATE TABLE "posts" (
 --      5. If a comment gets deleted, then all its descendants in the thread structure should be automatically deleted too
 
 CREATE TABLE "comments" (
-    id SERIAL PRIMARY KEY,
-    comment TEXT NOT NULL,
-    comment_id INTEGER,
-    post_id INTEGER,
-    user_id INTEGER,
+    "id" SERIAL PRIMARY KEY,
+    "comment" TEXT NOT NULL,
+    "comment_id" INTEGER,
+    "post_id" INTEGER,
+    "user_id" INTEGER,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
     FOREIGN KEY ("comment_id") REFERENCES "comments" ON DELETE CASCADE
@@ -77,10 +77,10 @@ CREATE TABLE "comments" (
 --      3. If a post gets deleted, then all the votes for that post should be automatically deleted too (OK)
 
 CREATE TABLE "vote" (
-    id SERIAL PRIMARY KEY,
-    vote TINYINT CHECK ("vote" = 1 OR "vote" = -1 ),
-    user_id INTEGER,
-    post_id INTEGER,
+    "id" SERIAL PRIMARY KEY,
+    "vote" TINYINT CHECK ("vote" = 1 OR "vote" = -1 ),
+    "user_id" INTEGER,
+    "post_id" INTEGER,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL
 )
@@ -106,10 +106,36 @@ CREATE TABLE "vote" (
 
 -- PART 3: MIGRATE THE PROVIDED DATA
 
---      1.	Topic descriptions can all be empty
+--      1.	Topic descriptions can all be empty (OK)
 --      2.	Since the bad_comments table doesn’t have the threading feature, you can migrate all comments as top-level comments, i.e. without a parent
 --      3.	You can use the Postgres string function regexp_split_to_table to unwind the comma-separated votes values into separate rows
 --      4.	Don’t forget that some users only vote or comment, and haven’t created any posts. You’ll have to create those users too.
 --      5.	The order of your migrations matter! For example, since posts depend on users and topics, you’ll have to migrate the latter first.
 --      6.	Tip: You can start by running only SELECTs to fine-tune your queries, and use a LIMIT to avoid large data sets. Once you know you have the correct query, you can then run your full INSERT...SELECT query.
 --      7.	Note: The data in your SQL Workspace contains thousands of posts and comments. The DML queries may take at least 10-15 seconds to run.
+
+-- First Step: Create the Topic's table
+
+INSERT INTO "topics" ("topic")
+    SELECT DISTINCT
+    	INITCAP(topic) -- INITCAP: Makes the first letter of each word uppercase
+    FROM bad_posts
+    ORDER BY 1;
+
+-- Second Step: Create User's table
+
+
+
+-- Third Step: Create
+
+SELECT
+	id,
+	title,
+	CONCAT(url,text_content),
+	CASE
+		WHEN url IS NOT NULL THEN 'Url'
+		WHEN text_content IS NOT NULL THEN 'Text'
+		ELSE ''
+	END
+FROM bad_posts
+ORDER BY id
