@@ -144,20 +144,31 @@ INSERT INTO "users" ("username")
 
 -- Third Step: Create Post's table
 
-SELECT
-	bp.id AS id,
-	bp.title AS title,
-	CONCAT(bp.url,text_content) AS content,
-	CASE
-		WHEN bp.url IS NOT NULL THEN 'Url'
-		WHEN bp.text_content IS NOT NULL THEN 'Text'
-		ELSE ''
-	END AS content_type,
-    t.id AS topic_id,
-    u.id AS user_id
-FROM bad_posts AS bp
-JOIN users AS u
-ON bp.username = u.username
-JOIN topics AS t
-ON INITCAP(bp.topic) = t.topic
-ORDER BY 1
+INSERT INTO "posts" ("id","title","content","content_type","topic_id","user_id")
+    SELECT
+    	bp.id AS id,
+    	LEFT(bp.title,100) AS title,
+    	CONCAT(bp.url,text_content) AS content,
+    	CASE
+    		WHEN bp.url IS NOT NULL THEN 'Url'
+    		WHEN bp.text_content IS NOT NULL THEN 'Text'
+    		ELSE ''
+    	END AS content_type,
+        t.id AS topic_id,
+        u.id AS user_id
+    FROM bad_posts AS bp
+    JOIN users AS u
+    ON bp.username = u.username
+    JOIN topics AS t
+    ON INITCAP(bp.topic) = t.topic
+    ORDER BY 1;
+
+-- Forth Step: Create Comment's tables
+
+-- CREATE TABLE "comments" (
+--     "id" SERIAL PRIMARY KEY,
+--     "comment" TEXT NOT NULL,
+--     "comment_id" INTEGER,
+--     "post_id" INTEGER,
+--     "user_id" INTEGER,
+-- )
