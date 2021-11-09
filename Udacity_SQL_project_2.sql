@@ -66,9 +66,9 @@ CREATE TABLE "comments" (
     comment_id INTEGER,
     post_id INTEGER,
     user_id INTEGER,
-    FOREIGN KEY ("comment_id") REFERENCES "comments" ON DELETE CASCADE,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
+    FOREIGN KEY ("comment_id") REFERENCES "comments" ON DELETE CASCADE
 )
 
 -- E. Allow registered users to create new posts on existing topics:
