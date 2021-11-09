@@ -20,8 +20,8 @@ CREATE TABLE "users" (
     "birth_date" DATE,
     "gender" VARCHAR(20),
     "last_login" TIMESTAMP,
-    "created_at" TIMESTAMP,
-)
+    "created_at" TIMESTAMP
+);
 
 -- B. Allow registered users to create new topics:
 --      1. Topic names have to be unique (OK)
@@ -124,18 +124,40 @@ INSERT INTO "topics" ("topic")
 
 -- Second Step: Create User's table
 
+INSERT INTO "users" ("username")
+    SELECT
+    	username
+    FROM bad_posts
+    UNION
+        SELECT
+        	username
+        FROM bad_comments
+    UNION
+        SELECT
+        	regexp_split_to_table(upvotes,',')
+        FROM bad_posts
+    UNION
+        SELECT
+            regexp_split_to_table(downvotes,',')
+        FROM bad_posts
+    ORDER BY 1;
 
-
--- Third Step: Create
+-- Third Step: Create Post's table
 
 SELECT
-	id,
-	title,
-	CONCAT(url,text_content),
+	bp.id AS id,
+	bp.title AS title,
+	CONCAT(bp.url,text_content) AS content,
 	CASE
-		WHEN url IS NOT NULL THEN 'Url'
-		WHEN text_content IS NOT NULL THEN 'Text'
+		WHEN bp.url IS NOT NULL THEN 'Url'
+		WHEN bp.text_content IS NOT NULL THEN 'Text'
 		ELSE ''
-	END
-FROM bad_posts
-ORDER BY id
+	END AS content_type,
+    t.id AS topic_id,
+    u.id AS user_id
+FROM bad_posts AS bp
+JOIN users AS u
+ON bp.username = u.username
+JOIN topics AS t
+ON INITCAP(bp.topic) = t.topic
+ORDER BY 1
