@@ -62,13 +62,13 @@ CREATE TABLE "posts" (
 
 CREATE TABLE "comments" (
     "id" SERIAL PRIMARY KEY,
-    "comment" TEXT NOT NULL,
-    "comment_id" INTEGER NULL,
+    "text_content" TEXT NOT NULL,
+    "parent_id" INTEGER NULL,
     "post_id" INTEGER,
     "user_id" INTEGER,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
-    FOREIGN KEY ("comment_id") REFERENCES comments(id) ON DELETE CASCADE
+    FOREIGN KEY ("parent_id") REFERENCES comments(id) ON DELETE CASCADE
 );
 
 -- E. Allow registered users to create new posts on existing topics:
@@ -107,12 +107,12 @@ CREATE TABLE "votes" (
 -- PART 3: MIGRATE THE PROVIDED DATA
 
 --      1.	Topic descriptions can all be empty (OK)
---      2.	Since the bad_comments table doesn’t have the threading feature, you can migrate all comments as top-level comments, i.e. without a parent
---      3.	You can use the Postgres string function regexp_split_to_table to unwind the comma-separated votes values into separate rows
---      4.	Don’t forget that some users only vote or comment, and haven’t created any posts. You’ll have to create those users too.
---      5.	The order of your migrations matter! For example, since posts depend on users and topics, you’ll have to migrate the latter first.
---      6.	Tip: You can start by running only SELECTs to fine-tune your queries, and use a LIMIT to avoid large data sets. Once you know you have the correct query, you can then run your full INSERT...SELECT query.
---      7.	Note: The data in your SQL Workspace contains thousands of posts and comments. The DML queries may take at least 10-15 seconds to run.
+--      2.	Since the bad_comments table doesn’t have the threading feature, you can migrate all comments as top-level comments, i.e. without a parent (OK)
+--      3.	You can use the Postgres string function regexp_split_to_table to unwind the comma-separated votes values into separate rows (OK)
+--      4.	Don’t forget that some users only vote or comment, and haven’t created any posts. You’ll have to create those users too. (OK)
+--      5.	The order of your migrations matter! For example, since posts depend on users and topics, you’ll have to migrate the latter first. (OK)
+--      6.	Tip: You can start by running only SELECTs to fine-tune your queries, and use a LIMIT to avoid large data sets. Once you know you have the correct query, you can then run your full INSERT...SELECT query. (OK)
+--      7.	Note: The data in your SQL Workspace contains thousands of posts and comments. The DML queries may take at least 10-15 seconds to run. (OK)
 
 -- First Step: Create the Topic's table
 
@@ -165,10 +165,10 @@ INSERT INTO "posts" ("id","title","content","content_type","topic_id","user_id")
 
 -- Forth Step: Create Comment's table
 
-INSERT INTO "comments" ("id","comment","post_id", "user_id")
+INSERT INTO "comments" ("id","text_content","post_id", "user_id")
     SELECT
     	bc.id AS id,
-    	bc.text_content AS comment,
+    	bc.text_content AS text_content,
     	bc.post_id AS post_id,
     	u.id AS user_id
     FROM bad_comments AS bc
