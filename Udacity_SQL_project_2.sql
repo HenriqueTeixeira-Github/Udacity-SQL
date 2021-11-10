@@ -1,10 +1,11 @@
 -- PART 1 - INVESTIGATE THE EXISTING SCHEMA
 
--- id from post and post_id from comments should have the same type
--- upvotes and downvotes should be in a separeted table
--- it should have a user table and this table and the link between the post and comment tables should be the user_id as a integer
--- We should have a table for topics
---  We hould have a table for users
+-- The id field from the post's table and post_id from the comment's table should have the same data type;
+-- Both upvotes and downvotes should be stored in a separeted table;
+-- The schema should have a table for users. The link between the post and comment tables and the users table should be the user_id as a integer;
+-- We should have a separated table just for the topics;
+-- We should track the time when posts and comments were created;
+-- The data type "BIGINT" is way too big for the post_id;
 
 -- PART 2 - CREATE THE DDL FOR YOUR NEW SCHEMA
 
@@ -21,13 +22,15 @@ CREATE TABLE "users" (
     "gender" VARCHAR(20),
     "last_login" TIMESTAMP,
     "created_at" TIMESTAMP,
-    CONSTRAINT username_not_empty CHECK(LENGTH(TRIM("username")) > 0)
+    CONSTRAINT "username_not_empty" CHECK(LENGTH(TRIM("username")) > 0)
 );
 
 CREATE UNIQUE INDEX ON "users" (LOWER("username"));
 
-CREATE INDEX ON "users" WHERE (LOWER("username") VARCHAR_PATTERN_OPS);
-CREATE INDEX "find_users_by_time" ON "users" ON "users" ("created_at");
+CREATE INDEX "find_user_by_partial_username" ON "users" (
+    LOWER("username") VARCHAR_PATTERN_OPS
+);
+CREATE INDEX "find_users_by_time" ON "users" ("created_at");
 
 -- B. Allow registered users to create new topics:
 --      1. Topic names have to be unique (OK)
@@ -40,12 +43,14 @@ CREATE TABLE "topics" (
     "topic" VARCHAR(30) NOT NULL,
     "description" VARCHAR(500),
     "created_at" TIMESTAMP,
-    CONSTRAINT topic_not_empty CHECK(LENGTH(TRIM("topic")) > 0)
+    CONSTRAINT "topic_not_empty" CHECK(LENGTH(TRIM("topic")) > 0)
 );
 
 CREATE UNIQUE INDEX ON "topics" (LOWER("topic"));
 
-CREATE INDEX ON "topic" WHERE (LOWER("topic") VARCHAR_PATTERN_OPS);
+CREATE INDEX "find_topics_by_partial_topic" ON "topics" (
+    LOWER("topic") VARCHAR_PATTERN_OPS
+);
 
 -- C. Allow registered users to create new posts on existing topics:
 --      1. Posts have a required title of at most 100 characters (OK)
@@ -64,20 +69,20 @@ CREATE TABLE "posts" (
     "created_at" TIMESTAMP,
     FOREIGN KEY ("topic_id") REFERENCES "topics" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
-    CONSTRAINT valid_content_type CHECK ("content_type" = 'Text' OR "content_type" = 'Url'),
-    CONSTRAINT title_not_empty CHECK (LENGTH(TRIM("title")) > 0)
+    CONSTRAINT "valid_content_type" CHECK ("content_type" = 'Text' OR "content_type" = 'Url'),
+    CONSTRAINT "title_not_empty" CHECK (LENGTH(TRIM("title")) > 0)
 );
 
 CREATE INDEX "find_posts_by_user" ON "posts" ("user_id");
-CREATE INDEX "find_posts_by_user" ON "posts" ("topic_id");
+CREATE INDEX "find_posts_by_topic" ON "posts" ("topic_id");
 CREATE INDEX "find_posts_by_url" ON "posts" ("content");
 
 -- D. Allow registered users to create new posts on existing topics:
 --      1. A comment’s text content can’t be empty. (OK)
 --      2. Contrary to the current linear comments, the new structure should allow comment threads at arbitrary levels. (OK)
---      3. If a post gets deleted, all comments associated with it should be automatically deleted too
---      4. If the user who created the comment gets deleted, then the comment will remain, but it will become dissociated from that user.
---      5. If a comment gets deleted, then all its descendants in the thread structure should be automatically deleted too
+--      3. If a post gets deleted, all comments associated with it should be automatically deleted too (OK)
+--      4. If the user who created the comment gets deleted, then the comment will remain, but it will become dissociated from that user. (OK)
+--      5. If a comment gets deleted, then all its descendants in the thread structure should be automatically deleted too. (OK)
 
 CREATE TABLE "comments" (
     "id" SERIAL PRIMARY KEY,
@@ -89,7 +94,7 @@ CREATE TABLE "comments" (
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
     FOREIGN KEY ("parent_id") REFERENCES comments(id) ON DELETE CASCADE,
-    CONSTRAINT text_content_not_empty CHECK (LENGTH(TRIM("text_content")) > 0)
+    CONSTRAINT "text_content_not_empty" CHECK (LENGTH(TRIM("text_content")) > 0)
 );
 
 CREATE INDEX "find_top_comments_by_post" ON "comments" ("post_id");
@@ -109,12 +114,12 @@ CREATE TABLE "votes" (
     "created_at" TIMESTAMP,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
-    CONSTRAINT valid_vote CHECK ("vote" = 1 OR "vote" = -1 )
+    CONSTRAINT "valid_vote" CHECK ("vote" = 1 OR "vote" = -1 )
 );
 
 -- Compute the score of a post, defined as the difference between the number of upvotes and the number of downvotes
 
-CREATE VIEW post_score AS (
+CREATE VIEW "post_score" AS (
     SELECT
         post_id,
         SUM(vote)
@@ -128,15 +133,15 @@ CREATE VIEW post_score AS (
 --      1.	List all users who haven’t logged in the last year. (OK)
 --      2.	List all users who haven’t created any post. (OK)
 --      3.	Find a user by their username. (OK)
---      4.	List all topics that don’t have any posts.
+--      4.	List all topics that don’t have any posts. (OK)
 --      5.	Find a topic by its name. (OK)
---      6.	List the latest 20 posts for a given topic.
---      7.	List the latest 20 posts made by a given user.
---      8.	Find all posts that link to a specific URL, for moderation purposes.
---      9.	List all the top-level comments (those that don’t have a parent comment for a given post.
---      10.	List all the direct children of a parent comment.
---      11.	List the latest 20 comments made by a given user.
---      12.	Compute the score of a post, defined as the difference between the number of upvotes and the number of downvotes
+--      6.	List the latest 20 posts for a given topic. (OK)
+--      7.	List the latest 20 posts made by a given user. (OK)
+--      8.	Find all posts that link to a specific URL, for moderation purposes. (OK)
+--      9.	List all the top-level comments (those that don’t have a parent comment for a given post). (OK)
+--      10.	List all the direct children of a parent comment. (OK)
+--      11.	List the latest 20 comments made by a given user. (OK)
+--      12.	Compute the score of a post, defined as the difference between the number of upvotes and the number of downvotes. (OK)
 --      13. You’ll need to use normalization, various constraints, as well as indexes in your new database schema. You should use named constraints and indexes to make your schema cleaner (OK)
 --      14. Your new database schema will be composed of five (5) tables that should have an auto-incrementing id as their primary key. (OK)
 
@@ -150,7 +155,7 @@ CREATE VIEW post_score AS (
 --      6.	Tip: You can start by running only SELECTs to fine-tune your queries, and use a LIMIT to avoid large data sets. Once you know you have the correct query, you can then run your full INSERT...SELECT query. (OK)
 --      7.	Note: The data in your SQL Workspace contains thousands of posts and comments. The DML queries may take at least 10-15 seconds to run. (OK)
 
--- First Step: Create the Topic's table
+-- First Step: Create the topic's table
 
 INSERT INTO "topics" ("topic")
     SELECT DISTINCT
@@ -158,7 +163,7 @@ INSERT INTO "topics" ("topic")
     FROM bad_posts
     ORDER BY 1;
 
--- Second Step: Create User's table
+-- Second Step: Create user's table
 
 INSERT INTO "users" ("username")
     SELECT
@@ -178,7 +183,7 @@ INSERT INTO "users" ("username")
         FROM bad_posts
     ORDER BY 1;
 
--- Third Step: Create Post's table
+-- Third Step: Create post's table
 
 INSERT INTO "posts" ("id","title","content","content_type","topic_id","user_id")
     SELECT
@@ -199,7 +204,7 @@ INSERT INTO "posts" ("id","title","content","content_type","topic_id","user_id")
     ON INITCAP(bp.topic) = t.topic
     ORDER BY 1;
 
--- Forth Step: Create Comment's table
+-- Forth Step: Create comment's table
 
 INSERT INTO "comments" ("id","text_content","post_id", "user_id")
     SELECT
