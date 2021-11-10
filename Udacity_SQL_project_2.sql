@@ -4,7 +4,7 @@
 -- Both upvotes and downvotes should be stored in a separeted table;
 -- The schema should have a table for users. The link between the post and comment tables and the users table should be the user_id as a integer;
 -- We should have a separated table just for the topics;
--- We should track the time when posts and comments were created;
+-- We should track the time when posts and comments are created;
 -- The data type "BIGINT" is way too big for the post_id;
 
 -- PART 2 - CREATE THE DDL FOR YOUR NEW SCHEMA
