@@ -20,7 +20,8 @@ CREATE TABLE "users" (
     "birth_date" DATE,
     "gender" VARCHAR(20),
     "last_login" TIMESTAMP,
-    "created_at" TIMESTAMP
+    "created_at" TIMESTAMP,
+    CONSTRAINT username_not_empty CHECK(LENGTH(TRIM("username")) > 0)
 );
 
 -- B. Allow registered users to create new topics:
@@ -32,7 +33,8 @@ CREATE TABLE "users" (
 CREATE TABLE "topics" (
     "id" SERIAL PRIMARY KEY,
     "topic" VARCHAR(30) UNIQUE NOT NULL,
-    "description" VARCHAR(500)
+    "description" VARCHAR(500),
+    CONSTRAINT topic_not_empty CHECK(LENGTH(TRIM("topic")) > 0)
 )
 
 -- C. Allow registered users to create new posts on existing topics:
@@ -50,7 +52,9 @@ CREATE TABLE "posts" (
     "topic_id" INTEGER,
     "user_id" INTEGER,
     FOREIGN KEY ("topic_id") REFERENCES "topics" ON DELETE CASCADE,
-    FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL
+    FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
+    CONSTRAINT valid_content_type CHECK ("content_type" = 'Text' OR "content_type" = 'Url'),
+    CONSTRAINT title_not_empty CHECK (LENGTH(TRIM("title")) > 0)
 )
 
 -- D. Allow registered users to create new posts on existing topics:
@@ -68,7 +72,8 @@ CREATE TABLE "comments" (
     "user_id" INTEGER,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
-    FOREIGN KEY ("parent_id") REFERENCES comments(id) ON DELETE CASCADE
+    FOREIGN KEY ("parent_id") REFERENCES comments(id) ON DELETE CASCADE,
+    CONSTRAINT text_content_not_empty CHECK (LENGTH(TRIM("text_content")) > 0)
 );
 
 -- E. Allow registered users to create new posts on existing topics:
@@ -78,20 +83,23 @@ CREATE TABLE "comments" (
 
 CREATE TABLE "votes" (
     "id" SERIAL PRIMARY KEY,
-    "vote" SMALLINT CHECK ("vote" = 1 OR "vote" = -1 ),
+    "vote" SMALLINT,
     "user_id" INTEGER,
     "post_id" INTEGER,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
-    FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL
+    FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
+    CONSTRAINT valid_vote CHECK ("vote" = 1 OR "vote" = -1 )
 )
 
 -- GUIDELINE
 
---      1.	List all users who haven’t logged in in the last year.
+--      1.	List all users who haven’t logged in the last year.
 --      2.	List all users who haven’t created any post.
---      3.	Find a user by their username.
+--      3.	Find a user by their username. (OK)
+--              Since we have a unique constraint in the username field, we don't need to create any index for this field.
 --      4.	List all topics that don’t have any posts.
---      5.	Find a topic by its name.
+--      5.	Find a topic by its name. (OK)
+--              Since we have a unique constraint in the topic field, we don't need to create any index for this field.
 --      6.	List the latest 20 posts for a given topic.
 --      7.	List the latest 20 posts made by a given user.
 --      8.	Find all posts that link to a specific URL, for moderation purposes.
@@ -192,7 +200,6 @@ INSERT INTO "votes" ("vote", "user_id", "post_id")
         FROM bad_posts
         ORDER BY 3,2,1
     )
-
     SELECT
         s.vote AS vote,
         u.id AS user_id,
