@@ -93,20 +93,18 @@ WITH sub AS
 SELECT
     country,
     year,
-    total_area_sqkm AS total_area_sqkm,
-    ABS(total_area_sqkm - ABS((SELECT MAX(deforestation) FROM sub))) as diff
+    total_area_sqkm::decimal(12,2) AS total_area_sqkm,
+    (ABS(total_area_sqkm - ABS((SELECT MAX(deforestation) FROM sub))))::decimal(12,2) as difference_total_area
 FROM forestation
 WHERE year = 2016
-ORDER BY diff
+ORDER BY 4
 LIMIT 1
 
 -- PART 2
 -- Prep: Create a table that shows the Regions and their percent forest area (sum of forest area divided by sum of land area) in 1990 and 2016.
 -- (Note that 1 sq mi = 2.59 sq km).
 
--- Cleanning process to sum only the countries that have data for forest_area_sqkm and total_area_sqkm in 1990 and 2016.
-
-
+-- Cleanning process to sum only the countries that have data for forest_area_sqkm and total_area_sqkm in both years (1990 and 2016).
 
 CREATE VIEW region_forestation AS
     WITH forestation_clean AS (
@@ -226,8 +224,8 @@ SELECT
     percent_forest::decimal(2,2) AS percent_forest_2016,
     diff_percent_forest::decimal(2,2)
 FROM sub
-WHERE year = 2016
-ORDER BY 4
+WHERE year = 2016 AND region <> 'World'
+ORDER BY 3 DESC
 
 -- PART 3
 
@@ -415,7 +413,17 @@ WHERE
 
 -- PART 4 - RECOMMENDATIONS
 
--- A) If countries were grouped by percent forestation in quartiles, how many countries it would have in each group per income_group?
+-- We should take the deforestation situation seriously. Nowadays, 41,67% of the countries analyzed are in the lowest quartile for percentage percentage and we have one entire region with just 2% of their area with forest.
+-- Keeping losing 3,21% of forest every 26 years it is not a great deal for for humanity. We should look in what China has changed to increase so much its forest area between 1990 and 2016. Maybe these changes could help Brazil (a country with similar land area) to recover the area that it has lost.
+-- It also important to take a deeper look in the countries in the Sub-Saharan Africa to understand why 4 of the 5 countries are in the "Top 5 Percent Decrease in Forest Area".
+
+-- When you use the income groups to look even further in the situation, it is possible to verify that we should pay attention to the countries with "Low income". None of them are listed in the fourth quartile (75%-100%) for forest percentage when we separated by income groups.
+-- This situation becomes even worst when you realize that most of than (26 of 32) decreased their forest area from 1990 to 2016. On the other hand, when you look to the countries with "high income",
+-- you realize that most of than (38 of 71) increased their forest area. Maybe some financial  support for those countries with "low income" could make some positive difference.
+
+-- Extra queries
+
+-- 4.1) If countries were grouped by percent forestation in quartiles, how many countries it would have in each group per income_group?
 
 WITH sub AS (
     SELECT
@@ -449,7 +457,7 @@ FROM sub
 GROUP BY 1,2
 ORDER BY 1,2
 
--- B) If countries were grouped by percent change, how many countries it would have in each group per income_group
+-- B) If countries were grouped by percent change, how many countries it would have in each group per income_group.
 
 
 WITH sub AS (
@@ -484,56 +492,56 @@ FROM sub
 WHERE year = 2016 AND diff_forest_2016_1990 IS NOT NULL
 GROUP BY 1,2
 
--- What is the average of forest change for the countries that increased for each income group?
-
-WITH sub AS (
-    SELECT
-        country,
-        year,
-        income_group,
-        forest_area_sqkm,
-        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
-        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
-        (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
-    FROM forestation
-    WHERE
-        country <> 'World' AND (year = 2016 OR year = 1990)
-    ORDER BY 1
-    )
-
-SELECT
-    income_group,
-    AVG(diff_forest_2016_1990)::decimal(9,2) AS forest_change_increase
-FROM sub
-WHERE
-    year = 2016 AND
-    percent_change > 0 -- INCREASED
-GROUP BY 1
-ORDER BY 2 DESC
-
--- What is the average of forest change for the countries that decreased for each income group?
-
-WITH sub AS (
-    SELECT
-        country,
-        year,
-        income_group,
-        forest_area_sqkm,
-        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
-        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
-        (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
-    FROM forestation
-    WHERE
-        country <> 'World' AND (year = 2016 OR year = 1990)
-    ORDER BY 1
-    )
-
-SELECT
-    income_group,
-    ABS(AVG(diff_forest_2016_1990))::decimal(9,2) AS forest_change_decrease
-FROM sub
-WHERE
-    year = 2016 AND
-    percent_change < 0 -- DECREASED
-GROUP BY 1
-ORDER BY 2 DESC
+-- -- C) What is the average of forest change for the countries that increased for each income group?
+--
+-- WITH sub AS (
+--     SELECT
+--         country,
+--         year,
+--         income_group,
+--         forest_area_sqkm,
+--         LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+--         forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
+--         (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
+--     FROM forestation
+--     WHERE
+--         country <> 'World' AND (year = 2016 OR year = 1990)
+--     ORDER BY 1
+--     )
+--
+-- SELECT
+--     income_group,
+--     AVG(diff_forest_2016_1990)::decimal(9,2) AS forest_change_increase
+-- FROM sub
+-- WHERE
+--     year = 2016 AND
+--     percent_change > 0 -- INCREASED
+-- GROUP BY 1
+-- ORDER BY 2 DESC
+--
+-- -- D) What is the average of forest change for the countries that decreased for each income group?
+--
+-- WITH sub AS (
+--     SELECT
+--         country,
+--         year,
+--         income_group,
+--         forest_area_sqkm,
+--         LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+--         forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
+--         (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
+--     FROM forestation
+--     WHERE
+--         country <> 'World' AND (year = 2016 OR year = 1990)
+--     ORDER BY 1
+--     )
+--
+-- SELECT
+--     income_group,
+--     ABS(AVG(diff_forest_2016_1990))::decimal(9,2) AS forest_change_decrease
+-- FROM sub
+-- WHERE
+--     year = 2016 AND
+--     percent_change < 0 -- DECREASED
+-- GROUP BY 1
+-- ORDER BY 2 DESC

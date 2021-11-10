@@ -1,11 +1,11 @@
 -- PART 1 - INVESTIGATE THE EXISTING SCHEMA
 
--- The id field from the post's table and post_id from the comment's table should have the same data type;
--- Both upvotes and downvotes should be stored in a separeted table;
--- The schema should have a table for users. The link between the post and comment tables and the users table should be the user_id as a integer;
--- We should have a separated table just for the topics;
--- We should track the time when posts and comments are created;
--- The data type "BIGINT" is way too big for the post_id;
+-- 1. The id field from the post's table and post_id from the comment's table should have the same data type;
+-- 2. Both upvotes and downvotes should be stored in a separated table;
+-- 3. The schema should have a table for users. The link between the post and comment tables and the users table should be the user_id as a integer;
+-- 4. We should have a separated table just for the topics;
+-- 5. We should track the time when posts and comments are created;
+-- 6. The data type "BIGINT" is way too big for the post_id;
 
 -- PART 2 - CREATE THE DDL FOR YOUR NEW SCHEMA
 
