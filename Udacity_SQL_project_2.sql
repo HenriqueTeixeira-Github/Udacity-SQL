@@ -16,13 +16,18 @@
 
 CREATE TABLE "users" (
     "id" SERIAL PRIMARY KEY,
-    "username" VARCHAR(25) UNIQUE NOT NULL,
+    "username" VARCHAR(25) NOT NULL,
     "birth_date" DATE,
     "gender" VARCHAR(20),
     "last_login" TIMESTAMP,
     "created_at" TIMESTAMP,
     CONSTRAINT username_not_empty CHECK(LENGTH(TRIM("username")) > 0)
 );
+
+CREATE UNIQUE INDEX ON "users" (LOWER("username"));
+
+CREATE INDEX ON "users" WHERE (LOWER("username") VARCHAR_PATTERN_OPS)
+CREATE INDEX "find_users_by_time" ON "users" ON "users" ("created_at")
 
 -- B. Allow registered users to create new topics:
 --      1. Topic names have to be unique (OK)
@@ -32,10 +37,15 @@ CREATE TABLE "users" (
 
 CREATE TABLE "topics" (
     "id" SERIAL PRIMARY KEY,
-    "topic" VARCHAR(30) UNIQUE NOT NULL,
+    "topic" VARCHAR(30) NOT NULL,
     "description" VARCHAR(500),
+    "created_at" TIMESTAMP,
     CONSTRAINT topic_not_empty CHECK(LENGTH(TRIM("topic")) > 0)
 )
+
+CREATE UNIQUE INDEX ON "topics" (LOWER("topic"));
+
+CREATE INDEX ON "topic" WHERE (LOWER("topic") VARCHAR_PATTERN_OPS)
 
 -- C. Allow registered users to create new posts on existing topics:
 --      1. Posts have a required title of at most 100 characters (OK)
@@ -51,11 +61,16 @@ CREATE TABLE "posts" (
     "content_type" VARCHAR(10), -- TEXT OR URL
     "topic_id" INTEGER,
     "user_id" INTEGER,
+    "created_at" TIMESTAMP,
     FOREIGN KEY ("topic_id") REFERENCES "topics" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
     CONSTRAINT valid_content_type CHECK ("content_type" = 'Text' OR "content_type" = 'Url'),
     CONSTRAINT title_not_empty CHECK (LENGTH(TRIM("title")) > 0)
 )
+
+CREATE INDEX "find_posts_by_user" ON "posts" ("user_id")
+CREATE INDEX "find_posts_by_user" ON "posts" ("topic_id")
+CREATE INDEX "find_posts_by_url" ON "posts" ("content")
 
 -- D. Allow registered users to create new posts on existing topics:
 --      1. A comment’s text content can’t be empty. (OK)
@@ -70,11 +85,16 @@ CREATE TABLE "comments" (
     "parent_id" INTEGER NULL,
     "post_id" INTEGER,
     "user_id" INTEGER,
+    "created_at" TIMESTAMP,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
     FOREIGN KEY ("parent_id") REFERENCES comments(id) ON DELETE CASCADE,
     CONSTRAINT text_content_not_empty CHECK (LENGTH(TRIM("text_content")) > 0)
 );
+
+CREATE INDEX "find_top_comments_by_post" ON "comments" ("post_id")
+CREATE INDEX "find_comments_by_parent" ON "comments" ("parent_id")
+CREATE INDEX "find_comments_by_user" ON "comments" ("user_id")
 
 -- E. Allow registered users to create new posts on existing topics:
 --      1. Hint: you can store the (up/down) value of the vote as the values 1 and -1 respectively. (OK)
@@ -86,9 +106,21 @@ CREATE TABLE "votes" (
     "vote" SMALLINT,
     "user_id" INTEGER,
     "post_id" INTEGER,
+    "created_at" TIMESTAMP,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
     CONSTRAINT valid_vote CHECK ("vote" = 1 OR "vote" = -1 )
+)
+
+-- Compute the score of a post, defined as the difference between the number of upvotes and the number of downvotes
+
+CREATE VIEW post_score AS (
+    SELECT
+        post_id,
+        SUM(vote)
+    FROM votes
+    GROUP BY 1
+    ORDER BY 2 DESC, 1
 )
 
 -- GUIDELINE
@@ -96,19 +128,17 @@ CREATE TABLE "votes" (
 --      1.	List all users who haven’t logged in the last year.
 --      2.	List all users who haven’t created any post.
 --      3.	Find a user by their username. (OK)
---              Since we have a unique constraint in the username field, we don't need to create any index for this field.
 --      4.	List all topics that don’t have any posts.
 --      5.	Find a topic by its name. (OK)
---              Since we have a unique constraint in the topic field, we don't need to create any index for this field.
 --      6.	List the latest 20 posts for a given topic.
 --      7.	List the latest 20 posts made by a given user.
 --      8.	Find all posts that link to a specific URL, for moderation purposes.
---      9.	List all the top-level comments (those that don’t have a parent comment) for a given post.
+--      9.	List all the top-level comments (those that don’t have a parent comment for a given post.
 --      10.	List all the direct children of a parent comment.
 --      11.	List the latest 20 comments made by a given user.
 --      12.	Compute the score of a post, defined as the difference between the number of upvotes and the number of downvotes
 
---      13. You’ll need to use normalization, various constraints, as well as indexes in your new database schema. You should use named constraints and indexes to make your schema cleaner
+--      13. You’ll need to use normalization, various constraints, as well as indexes in your new database schema. You should use named constraints and indexes to make your schema cleaner (OK)
 
 --      14. Your new database schema will be composed of five (5) tables that should have an auto-incrementing id as their primary key. (OK)
 
