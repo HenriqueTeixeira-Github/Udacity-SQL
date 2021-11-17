@@ -114,7 +114,7 @@ CREATE TABLE "votes" (
     "created_at" TIMESTAMP,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
-    CONSTRAINT "unique_vote" UNIQUE("user_id", "post_id")
+    CONSTRAINT "unique_vote" UNIQUE("user_id", "post_id"),
     CONSTRAINT "valid_vote" CHECK ("vote" = 1 OR "vote" = -1 )
 );
 
@@ -123,7 +123,7 @@ CREATE TABLE "votes" (
 CREATE VIEW "post_score" AS (
     SELECT
         post_id,
-        SUM(vote)
+        SUM(vote)::integer AS sum_votes
     FROM votes
     GROUP BY 1
     ORDER BY 2 DESC, 1
@@ -242,12 +242,10 @@ INSERT INTO "votes" ("vote", "user_id", "post_id")
     JOIN users AS u
     ON s.username = u.username;
 
-
+-- DROP VIEW "post_score";
 
 -- DROP TABLE "votes";
 -- DROP TABLE "comments";
 -- DROP TABLE "posts";
 -- DROP TABLE "topics";
 -- DROP TABLE "users";
-
--- DROP VIEW "post_score";
