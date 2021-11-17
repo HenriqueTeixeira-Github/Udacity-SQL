@@ -64,7 +64,7 @@ CREATE TABLE "posts" (
     "title" VARCHAR(100) NOT NULL,
     "content" TEXT,
     "content_type" VARCHAR(10), -- TEXT OR URL
-    "topic_id" INTEGER,
+    "topic_id" INTEGER NOT NULL,
     "user_id" INTEGER,
     "created_at" TIMESTAMP,
     FOREIGN KEY ("topic_id") REFERENCES "topics" ON DELETE CASCADE,
@@ -88,7 +88,7 @@ CREATE TABLE "comments" (
     "id" SERIAL PRIMARY KEY,
     "text_content" TEXT NOT NULL,
     "parent_id" INTEGER NULL,
-    "post_id" INTEGER,
+    "post_id" INTEGER NOT NULL,
     "user_id" INTEGER,
     "created_at" TIMESTAMP,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
@@ -110,10 +110,11 @@ CREATE TABLE "votes" (
     "id" SERIAL PRIMARY KEY,
     "vote" SMALLINT,
     "user_id" INTEGER,
-    "post_id" INTEGER,
+    "post_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP,
     FOREIGN KEY ("post_id") REFERENCES "posts" ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ON DELETE SET NULL,
+    CONSTRAINT "unique_vote" UNIQUE("user_id", "post_id")
     CONSTRAINT "valid_vote" CHECK ("vote" = 1 OR "vote" = -1 )
 );
 
@@ -214,7 +215,7 @@ INSERT INTO "comments" ("id","text_content","post_id", "user_id")
     	u.id AS user_id
     FROM bad_comments AS bc
     JOIN users AS u
-    ON bc.username = u.username
+    ON bc.username = u.username;
 
 -- Fifth Step: Create vote's table
 
@@ -239,7 +240,7 @@ INSERT INTO "votes" ("vote", "user_id", "post_id")
         s.post_id AS post_id
     FROM sub AS s
     JOIN users AS u
-    ON s.username = u.username
+    ON s.username = u.username;
 
 
 
