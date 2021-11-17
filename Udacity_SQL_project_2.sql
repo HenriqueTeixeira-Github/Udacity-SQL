@@ -160,7 +160,7 @@ CREATE VIEW "post_score" AS (
 
 INSERT INTO "topics" ("topic")
     SELECT DISTINCT
-    	INITCAP(topic) -- INITCAP: Makes the first letter of each word uppercase
+    	INITCAP(topic)
     FROM bad_posts
     ORDER BY 1;
 
@@ -205,7 +205,7 @@ INSERT INTO "posts" ("id","title","content","content_type","topic_id","user_id")
     ON INITCAP(bp.topic) = t.topic
     ORDER BY 1;
 
--- Forth Step: Create comment's table
+-- Fourth Step: Create comment's table
 
 INSERT INTO "comments" ("id","text_content","post_id", "user_id")
     SELECT
@@ -243,9 +243,11 @@ INSERT INTO "votes" ("vote", "user_id", "post_id")
     ON s.username = u.username;
 
 -- DROP VIEW "post_score";
-
+--
 -- DROP TABLE "votes";
 -- DROP TABLE "comments";
 -- DROP TABLE "posts";
 -- DROP TABLE "topics";
 -- DROP TABLE "users";
+
+-- PROJECT APPROVED (17/11/2021 - UDACITY)
