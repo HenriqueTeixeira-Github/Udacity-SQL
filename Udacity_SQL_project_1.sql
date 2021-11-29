@@ -459,7 +459,6 @@ ORDER BY 1,2
 
 -- B) If countries were grouped by percent change, how many countries it would have in each group per income_group.
 
-
 WITH sub AS (
     SELECT
         country,
@@ -492,56 +491,58 @@ FROM sub
 WHERE year = 2016 AND diff_forest_2016_1990 IS NOT NULL
 GROUP BY 1,2
 
--- -- C) What is the average of forest change for the countries that increased for each income group?
---
--- WITH sub AS (
---     SELECT
---         country,
---         year,
---         income_group,
---         forest_area_sqkm,
---         LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
---         forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
---         (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
---     FROM forestation
---     WHERE
---         country <> 'World' AND (year = 2016 OR year = 1990)
---     ORDER BY 1
---     )
---
--- SELECT
---     income_group,
---     AVG(diff_forest_2016_1990)::decimal(9,2) AS forest_change_increase
--- FROM sub
--- WHERE
---     year = 2016 AND
---     percent_change > 0 -- INCREASED
--- GROUP BY 1
--- ORDER BY 2 DESC
---
--- -- D) What is the average of forest change for the countries that decreased for each income group?
---
--- WITH sub AS (
---     SELECT
---         country,
---         year,
---         income_group,
---         forest_area_sqkm,
---         LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
---         forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
---         (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
---     FROM forestation
---     WHERE
---         country <> 'World' AND (year = 2016 OR year = 1990)
---     ORDER BY 1
---     )
---
--- SELECT
---     income_group,
---     ABS(AVG(diff_forest_2016_1990))::decimal(9,2) AS forest_change_decrease
--- FROM sub
--- WHERE
---     year = 2016 AND
---     percent_change < 0 -- DECREASED
--- GROUP BY 1
--- ORDER BY 2 DESC
+-- C) What is the average of forest change for the countries that increased for each income group?
+
+WITH sub AS (
+    SELECT
+        country,
+        year,
+        income_group,
+        forest_area_sqkm,
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
+        (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
+    FROM forestation
+    WHERE
+        country <> 'World' AND (year = 2016 OR year = 1990)
+    ORDER BY 1
+    )
+
+SELECT
+    income_group,
+    AVG(diff_forest_2016_1990)::decimal(9,2) AS forest_change_increase
+FROM sub
+WHERE
+    year = 2016 AND
+    percent_change > 0 -- INCREASED
+GROUP BY 1
+ORDER BY 2 DESC
+
+-- D) What is the average of forest change for the countries that decreased for each income group?
+
+WITH sub AS (
+    SELECT
+        country,
+        year,
+        income_group,
+        forest_area_sqkm,
+        LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS forest_area_sqkm_lead,
+        forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS diff_forest_2016_1990,
+        (forest_area_sqkm - LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC))/LEAD(forest_area_sqkm) OVER (ORDER BY country, year DESC) AS percent_change
+    FROM forestation
+    WHERE
+        country <> 'World' AND (year = 2016 OR year = 1990)
+    ORDER BY 1
+    )
+
+SELECT
+    income_group,
+    ABS(AVG(diff_forest_2016_1990))::decimal(9,2) AS forest_change_decrease
+FROM sub
+WHERE
+    year = 2016 AND
+    percent_change < 0 -- DECREASED
+GROUP BY 1
+ORDER BY 2 DESC
+
+-- PROJECT APPROVED (10/11/2021 - UDACITY)
